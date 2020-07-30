@@ -1,9 +1,26 @@
 <template>
   <div id="app">
     <ul id="messages"></ul>
-    <input placeholder="请输入用户名" v-model="userName" />
-    <button @click="start">咨询</button>
-    <form>
+    <button @click="breakClick">断开</button>
+    <div class="box">
+      <input placeholder="请输入用户名" v-model="kefuName" />
+
+      <div>
+        <div v-for="(item, index) in chatList" :key="index">
+          {{item.from}}:
+          {{item.message}}
+        </div>
+      </div>
+    </div>
+    <div v-if="curUser">与用户： {{curUser}} 聊天中</div>
+    <!-- <button @click="start">登记客服</button> -->
+    <div
+      v-for="(item, index) in waitingList"
+      :key="index"
+      class="list"
+      @click="wClick(item)"
+    >{{item.name}}</div>
+    <form v-if="curUser">
       <input id="m" autocomplete="off" v-model="inputData" />
       <button @click="submit">Send</button>
     </form>
@@ -14,29 +31,65 @@
 <script>
 import io from 'socket.io-client'
 const socket = io('http://localhost:8082');
+import Axios from 'axios'
 export default {
   data() {
     return {
-      userName: '',
-      inputData: ''
+      kefuName: '',
+      inputData: '',
+      curUser: '',
+      waitingList: [],
+      chatList: [],
     }
   },
   beforeCreate() {
 
   },
   methods: {
-    start() {
+    breakClick() {
 
-      socket.emit('waiting', this.userName)
     },
     submit() {
-      socket.emit(this.userName, this.inputData)
+      let content = { from: this.kefuName, message: this.inputData }
+      socket.emit(this.curUser, content)
+      // this.chatList.push(content)
+    },
+    initData() {
+      Axios.get('/socket/getWaitingList').then(res => {
+        this.waitingList = res.data.list
+      })
+    },
+    fetchData() {
+      socket.on('tokefu', (msg) => {
+        console.log('list', msg);
+        this.waitingList = msg
+      })
+
+    },
+    wClick(data) {
+      this.curUser = data.name
+
+      socket.emit('connectings', { kefuName: this.kefuName, userName: data.name, userId: data.id, type: 'first_connect' })
+      socket.on(this.curUser, (msg) => {
+        console.log('msg', msg);
+        this.chatList.push(msg)
+      })
     }
+  },
+  created() {
+    this.initData()
+    this.fetchData()
   }
 }
 </script>
 <style lang="scss" scoped>
 #app {
+  .box {
+    display: flex;
+  }
+  .list {
+    cursor: pointer;
+  }
   * {
     margin: 0;
     padding: 0;
