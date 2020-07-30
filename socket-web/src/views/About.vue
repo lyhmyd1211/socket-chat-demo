@@ -14,12 +14,15 @@
     </div>
     <div v-if="curUser">与用户： {{curUser}} 聊天中</div>
     <!-- <button @click="start">登记客服</button> -->
-    <div
-      v-for="(item, index) in waitingList"
-      :key="index"
-      class="list"
-      @click="wClick(item)"
-    >{{item.name}}</div>
+    <div v-if="!this.curUser">
+      <div
+        v-for="(item, index) in waitingList"
+        :key="index"
+        class="list"
+        @click="wClick(item)"
+      >{{item.name}}</div>
+    </div>
+
     <form v-if="curUser">
       <input id="m" autocomplete="off" v-model="inputData" />
       <button @click="submit">Send</button>

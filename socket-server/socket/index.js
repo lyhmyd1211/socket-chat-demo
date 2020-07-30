@@ -53,7 +53,7 @@ class socket {
         this.list = this._remove(this.list, conn.userId, 'id')
         this.io.sockets.emit('waiting_count',this.list.length)
         console.log('移除',this.list);
-        this.io.sockets.emit('tokefu',[])
+        this.io.sockets.emit('tokefu',this.list)
         }
         
         // var curSocket = this.getSocket(socket.id)

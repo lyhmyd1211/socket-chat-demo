@@ -4,7 +4,8 @@
     <div class="box">
       <div>
         <input placeholder="请输入用户名" v-model="userName" />
-        <button @click="start">咨询</button>
+        <button @click="start" v-if="status ==0">咨询</button>
+        <button @click="breakClick">断开</button>
       </div>
       <div>
         <div v-for="(item, index) in chatList" :key="index">
@@ -49,6 +50,9 @@ export default {
       console.log('发送', this.userName, this.inputData);
       socket.emit(this.userName, content)
       // this.chatList.push(content)
+    },
+    breakClick() {
+
     },
     start() {
       socket.emit('waiting', this.userName)
