@@ -1,5 +1,6 @@
 var sc = require('socket.io')
 var _ = require('underscore')
+var app = require('../app');
 class socket {
   
   constructor(server) {
@@ -15,6 +16,8 @@ class socket {
     return _.findWhere(this.io.sockets.sockets, {id});
   }
 
+  
+
   connection() {
 
     let user = ''
@@ -22,12 +25,19 @@ class socket {
 
     /**建立连接 */
     this.io.on('connection', (socket)=>{
-      // console.log('a user connected', socket.id);
+      console.log('a user connected', socket.id);
 
       /**断开连接移出队列 */
-      socket.on('disconnect', ()=> {
+      socket.on('disconnect', (reason)=> {
         // console.log('a user disconnected', socket.id);
-        this.list = this._remove(this.list, socket.id,'id')
+        this.list = this._remove(this.list, socket.id, 'id')
+        this.io.sockets.emit('waiting_count',this.list.length)
+        /**实时更新客服看到的用户列表 */
+        socket.broadcast.emit('tokefu',this.list)
+        app.set('waitingList',this.list)
+        this.io.sockets.emit(socket.id,{from:"server",message:'',type:'disconnect'})
+        
+
         // console.log('after_remove_cur',this.list);
       })
 
@@ -41,6 +51,7 @@ class socket {
         this.io.sockets.emit('waiting_count',this.list.length)
         /**实时更新客服看到的用户列表 */
         socket.broadcast.emit('tokefu',this.list)
+        app.set('waitingList',this.list)
       })
       
       
@@ -54,10 +65,11 @@ class socket {
         this.io.sockets.emit('waiting_count',this.list.length)
         console.log('移除',this.list);
         this.io.sockets.emit('tokefu',this.list)
+        app.set('waitingList',this.list)
         }
         
         // var curSocket = this.getSocket(socket.id)
-        socket.on(conn.userName, (msg) => {
+        socket.on(conn.userId, (msg) => {
           console.log('接收到发送', msg);
           
           this.io.sockets.emit(conn.userName,msg)

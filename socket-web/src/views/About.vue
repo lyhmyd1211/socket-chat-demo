@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <ul id="messages"></ul>
+    <!-- <button @click="start">客服登录</button> -->
     <button @click="breakClick">断开</button>
     <div class="box">
       <input placeholder="请输入用户名" v-model="kefuName" />
@@ -13,8 +14,7 @@
       </div>
     </div>
     <div v-if="curUser">与用户： {{curUser}} 聊天中</div>
-    <!-- <button @click="start">登记客服</button> -->
-    <div v-if="!this.curUser">
+    <div v-if="!curUser">
       <div
         v-for="(item, index) in waitingList"
         :key="index"
@@ -59,7 +59,9 @@ export default {
     },
     initData() {
       Axios.get('/socket/getWaitingList').then(res => {
-        this.waitingList = res.data.list
+        this.waitingList = res.data.data.waitingList
+        this.fetchData()
+        console.log('waiting', res, this.waitingList);
       })
     },
     fetchData() {
@@ -71,17 +73,21 @@ export default {
     },
     wClick(data) {
       this.curUser = data.name
-
+      console.log('客服连接', data);
       socket.emit('connectings', { kefuName: this.kefuName, userName: data.name, userId: data.id, type: 'first_connect' })
-      socket.on(this.curUser, (msg) => {
-        console.log('msg', msg);
-        this.chatList.push(msg)
+      socket.on(data.id, (msg) => {
+        if (msg.type == 'disconnect') {
+          this.curUser = ''
+          this.chatList = []
+        } else {
+          this.chatList.push(msg)
+        }
       })
     }
   },
   created() {
     this.initData()
-    this.fetchData()
+    // this.fetchData()
   }
 }
 </script>

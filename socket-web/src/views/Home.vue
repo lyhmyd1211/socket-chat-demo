@@ -28,7 +28,7 @@
 
 <script>
 import io from 'socket.io-client'
-const socket = io('http://localhost:8082');
+// const socket = io('http://localhost:8082');
 export default {
   data() {
     return {
@@ -37,7 +37,8 @@ export default {
       status: 0,
       kefuName: '',
       chatList: [],
-      waiting_count: 0
+      waiting_count: 0,
+      socketInstance: '',
     }
   },
   beforeCreate() {
@@ -48,30 +49,38 @@ export default {
       let content = { from: this.userName, message: this.inputData }
 
       console.log('发送', this.userName, this.inputData);
-      socket.emit(this.userName, content)
+      this.socket.emit(this.userName, content)
       // this.chatList.push(content)
     },
     breakClick() {
-
+      this.socket.disconnect(true)
+      this.status = 0
+      this.chatList = []
     },
     start() {
-      socket.emit('waiting', this.userName)
+
+      this.socket = io('http://localhost:8082');
+
+      this.socket.emit('waiting', this.userName)
       /**状态通信 */
-      socket.on('status_' + this.userName, (data) => {
+      this.socket.on('status_' + this.userName, (data) => {
         this.status = data.status
         this.kefuName = data.kefu
 
         if (data.status == 2) {
-          socket.emit('connectings', { kefuName: this.kefuName, userName: this.userName, userId: '', type: 'user_connect' })
+          this.socket.emit('connectings', { kefuName: this.kefuName, userName: this.userName, userId: this.socket.id, type: 'user_connect' })
           /**消息通信 */
-          socket.on(this.userName, (msg) => {
-            console.log('msg', msg);
-            this.chatList.push(msg)
+          this.socket.on(this.socket.id, (msg) => {
+            if (msg.type == 'disconnect') {
+              this.breakClick()
+            } else {
+              this.chatList.push(msg)
+            }
           })
         }
 
       })
-      socket.on('waiting_count', (count) => {
+      this.socket.on('waiting_count', (count) => {
         this.waiting_count = count
       })
     },

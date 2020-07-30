@@ -22,8 +22,8 @@ app.set('port', port);
 var server = http.createServer(app);
 var io = new socket(server)
 io.connection()
-var list = io.getList()
-app.set('waitingList',list)
+// var list = io.getList()
+// app.set('waitingList',list)
 /**
  * Listen on provided port, on all network interfaces.
  */
